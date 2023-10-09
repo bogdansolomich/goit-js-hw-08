@@ -1,45 +1,46 @@
-
 import throttle from 'lodash.throttle';
 
-
-const FORM_KEY_LOCAL = 'feedback-form-state';
 const form = document.querySelector('.feedback-form');
+const email = document.querySelector('input');
+const message = document.querySelector('textarea');
+const btn = document.querySelector('button');
 
+form.addEventListener('input', throttle(getValues, 500));
 
-form.addEventListener('input', throttle(handlerInput, 500));
-form.addEventListener('submit', handlerSubmit);
-
-//Запис даних у сховище
-
-function handlerInput(evt) {
-  let data = localStorage.getItem(FORM_KEY_LOCAL);
-  data = data ? JSON.parse(data) : {};
-  data[evt.target.name] = evt.target.value;
-  localStorage.setItem(FORM_KEY_LOCAL, JSON.stringify(data));
-};
-
-//Виведення даних сховища у консоль, очищення сховища і форми
- 
-function handlerSubmit(evt) {
-  evt.preventDefault();
-  const { email, message } = evt.currentTarget.elements;
-  console.log({ email: email.value, message: message.value });
-  if (localStorage.getItem(FORM_KEY_LOCAL)) {
-    localStorage.removeItem(FORM_KEY_LOCAL);
+function getValues() {
+  const formData = {
+    email: email.value,
+    message: message.value,
+  };
+  if (email.value && message.value) {
+    btn.removeAttribute('disabled');
+    localStorage.setItem('feedback-form-state', JSON.stringify(formData));
+  } else {
+    btn.setAttribute('disabled', 'true');
   }
-   evt.currentTarget.reset();
-};
+}
 
-// Перевірка сховища
+document.addEventListener('DOMContentLoaded', autocomplete);
 
-function checkFeedbackForm() {
-  let data = localStorage.getItem(FORM_KEY_LOCAL);
-  if (!data) return;
-  data = JSON.parse(data);
- 
-  for (const key in data) {
-    form.elements[key].value = data[key] || '';
+function autocomplete() {
+  const formState = JSON.parse(localStorage.getItem('feedback-form-state'));
+  if (formState) {
+    email.value = formState.email;
+    message.value = formState.message;
   }
-};
+  if (email.value && message.value) {
+    btn.removeAttribute('disabled');
+  }
+}
 
-checkFeedbackForm();
+form.addEventListener('submit', clearValues);
+
+function clearValues(e) {
+  e.preventDefault();
+  console.log({
+    email: email.value,
+    message: message.value,
+  });
+  localStorage.removeItem('feedback-form-state');
+  e.target.reset();
+}
