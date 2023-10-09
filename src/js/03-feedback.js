@@ -1,47 +1,46 @@
-import { throttle } from 'lodash';
+import throttle from 'lodash.throttle';
+
 const form = document.querySelector('.feedback-form');
-const emailInput = form.querySelector('[name="email"]');
-const messageInput = form.querySelector('[name="message"]');
-const sendButton = form.querySelector('button[type="submit"]');
-sendButton.disabled = true;
-//! заборона відправки пустих полів
-form.addEventListener("input", function() {
-  sendButton.disabled = emailInput.value === '' || messageInput.value === '';
-});
+const email = document.querySelector('input');
+const message = document.querySelector('textarea');
+const btn = document.querySelector('button');
 
-//! зберігаемо у сховище кожні піві секунди
-const saveFormState = throttle(() => {
-  const formState = {
-    email: emailInput.value,
-    message: messageInput.value,
+form.addEventListener('input', throttle(getValues, 500));
+
+function getValues() {
+  const formData = {
+    email: email.value,
+    message: message.value,
   };
-
-  localStorage.setItem('feedback-form-state', JSON.stringify(formState));
-}, 500);
-
-emailInput.addEventListener('input', saveFormState);
-messageInput.addEventListener('input', saveFormState);
-//! отримуємо зі сховища
-const savedState = localStorage.getItem('feedback-form-state');
-
-if (savedState) {
-  const parsedState = JSON.parse(savedState);
-  emailInput.value = parsedState.email;
-  messageInput.value = parsedState.message;
+  if (email.value && message.value) {
+    btn.removeAttribute('disabled');
+    localStorage.setItem('feedback-form-state', JSON.stringify(formData));
+  } else {
+    btn.setAttribute('disabled', 'true');
+  }
 }
-//! очищення сховища та полів
-form.addEventListener('submit', event => {
-  event.preventDefault();
 
-  const formState = {
-    email: emailInput.value,
-    message: messageInput.value,
-  };
+document.addEventListener('DOMContentLoaded', autocomplete);
 
-  console.log(formState);
+function autocomplete() {
+  const formState = JSON.parse(localStorage.getItem('feedback-form-state'));
+  if (formState) {
+    email.value = formState.email;
+    message.value = formState.message;
+  }
+  if (email.value && message.value) {
+    btn.removeAttribute('disabled');
+  }
+}
 
+form.addEventListener('submit', clearValues);
+
+function clearValues(e) {
+  e.preventDefault();
+  console.log({
+    email: email.value,
+    message: message.value,
+  });
   localStorage.removeItem('feedback-form-state');
-  emailInput.value = '';
-  messageInput.value = '';
-  sendButton.disabled = true;
-});
+  e.target.reset();
+}
