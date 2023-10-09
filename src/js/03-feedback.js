@@ -1,5 +1,4 @@
 import { throttle } from 'lodash';
-
 const form = document.querySelector('.feedback-form');
 const emailInput = form.querySelector('[name="email"]');
 const messageInput = form.querySelector('[name="message"]');
